@@ -26,25 +26,43 @@ class TaskModal extends Modal {
 	onOpen() {
 		const { contentEl } = this;
 		contentEl.createEl('h3', { text: 'Create Task' });
-		contentEl.createEl('input', {
+		const descInput = contentEl.createEl('input', {
 			type: 'text',
 			placeholder: 'Enter task description'});
-		contentEl.createEl('input', {
+		const startInput = contentEl.createEl('input', {
 			type: 'datetime-local',
 			placeholder: 'Select Start Date'});
-		contentEl.createEl('input', {
+		const endInput = contentEl.createEl('input', {
 			type: 'datetime-local',
 			placeholder: 'Select End Date'});
-		contentEl.createEl('input', {
+		const priorityInput = contentEl.createEl('input', {
 			type: 'text',
 			placeholder: 'Priority Level'});
-		contentEl.createEl('input', {
+		const tagsInput = contentEl.createEl('input', {
 			type: 'text',
 			placeholder: 'Enter Tags (comma separated)'});
-		contentEl.createEl('textarea', {
-			placeholder: 'Enter Task Notes'});
-		contentEl.createEl('button', {
+		const linkedInput = contentEl.createEl('textarea', {
+			placeholder: 'Enter Related Notes (use [[link]] format)'});
+		const submitBtn = contentEl.createEl('button', {
 			text: 'Create Task'});
+
+		submitBtn.addEventListener('click', () => {
+			const taskDescription = descInput.value;
+			const startDate = startInput.value;
+			const endDate = endInput.value;
+			const priority = priorityInput.value;
+			const tags = tagsInput.value;
+			const linkedNotes = linkedInput.value;
+
+			if (taskDescription) {
+				const timestamp = new Date().toISOString();
+				console.log(`Task: ${taskDescription}\nStart: ${startDate}\nEnd: ${endDate}\nPriority: ${priority}\nTags: ${tags}\nLinked Notes: ${linkedNotes}`);
+				new Notice(`Task Created: ${taskDescription} at ${timestamp}`);
+				this.close();
+			} else {
+				new Notice("Please fill in all required fields.");
+			}
+		});
 	}
 
 	onClose() {
