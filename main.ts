@@ -1,16 +1,25 @@
 import { Plugin, Notice, Modal, App, TFile } from 'obsidian';
 
-export default class ExamplePlugin extends Plugin {
+export default class KanbanTaskNotePlugin extends Plugin {
 	async onload() {
 
-		console.log("[TaskNote] Task Logger Plugin loaded");
+		console.log("[KanbanTaskNote] Kanban Task Note Plugin loaded");
 
 		this.addRibbonIcon('circle-check-big', 'Log Task', async () => {
-			const modal = new TaskModal(this.app);
+			const modal = new KanbanTaskNote(this.app);
 			modal.open();
 		});
 
-		this.registerMarkdownCodeBlockProcessor('task-note-ui', (source, el, ctx) => {
+		this.app.workspace.on('file-open', (file) => {
+			if (file instanceof TFile) {
+				if (this.isPluginTaskNote(file))
+				{
+					new Notice("[INFO] [KanbanTaskNote] Note is a Task Note");
+				}
+			}
+		});
+
+		this.registerMarkdownCodeBlockProcessor('kanban-task-note-ui', (source, el, ctx) => {
 			// This is where you can process the task-note code block
 			const file = this.app.workspace.getActiveFile();
 			if (!file || !this.isPluginTaskNote(file))
@@ -37,14 +46,14 @@ export default class ExamplePlugin extends Plugin {
 				if (file && this.isPluginTaskNote(file)) {
 					if (!checking)
 					{
-						console.log("[TaskNote] Executing Add task Command");
+						console.log("[KanbanTaskNote] Executing Add task Command");
 						this.insertDateHeading(file, true);
 					} 
 					execCmd = true;
 				}
 				else
 				{
-					console.log("[TaskNote] Checking the note...");
+					console.log("[KanbanTaskNote] Checking the note...");
 					execCmd = false;
 				}
 				return execCmd;
@@ -59,14 +68,14 @@ export default class ExamplePlugin extends Plugin {
 				if (file && this.isPluginTaskNote(file)) {
 					if (!checking)
 					{
-						console.log("[TaskNote] Executing Add task Command");
+						console.log("[KanbanTaskNote] Executing Add task Command");
 						this.insertDateHeading(file, false);
 					} 
 					execCmd = true;
 				}
 				else
 				{
-					console.log("[TaskNote] Checking the note...");
+					console.log("[KanbanTaskNote] Checking the note...");
 					execCmd = false;
 				}
 				return execCmd;
@@ -75,7 +84,7 @@ export default class ExamplePlugin extends Plugin {
 	}
 
 	onunload() {
-		console.log("[TaskNote] Task Logger Plugin unloaded");
+		console.log("[KanbanTaskNote] Kanban Task Note unloaded");
 	}
 
 	isPluginTaskNote(acticveFile: TFile): boolean {
@@ -83,13 +92,16 @@ export default class ExamplePlugin extends Plugin {
 		if (acticveFile)
 		{
 			const cache = this.app.metadataCache.getFileCache(acticveFile);
-			if (cache && cache.frontmatter && cache.frontmatter._plugin_id === 'task-note') {
-				console.log("[TaskNote] Note is a Task Note");
+			if (cache && cache.frontmatter && cache.frontmatter._plugin_id === 'kanban-task-note') {
 				pluginTaskNote = true;
+			}
+			else if (cache && cache.frontmatter && cache.frontmatter._plugin_id !== 'kanban-task-note')
+			{
+				new Notice("[WARN] [KanbanTaskNote] Note is NOT a Task Note");
 			}
 			else
 			{
-				console.log("[TaskNote] Note is NOT a Task Note");
+				new Notice("[WARN] [KanbanTaskNote] Note does not have frontmatter or _plugin_id");
 			}
 		}
 		else
@@ -107,7 +119,7 @@ export default class ExamplePlugin extends Plugin {
 
 		// Check if the date heading already exists
 		if (content.includes(dateHeading)) {
-			new Notice(`[TaskNote] Date heading for ${today} already exists.`);
+			new Notice(`[WARN] [KanbanTaskNote] Date heading for ${today} already exists.`);
 			return;
 		}
 
@@ -117,31 +129,31 @@ export default class ExamplePlugin extends Plugin {
 
 		let toInsert = `\n${dateHeading}\n`;
 		if (empty) {
-			console.log("[TaskNote] Inserting empty date heading");
+			console.log("[KanbanTaskNote] Inserting empty date heading");
 			toInsert += `<!-- Add subtasks here -->\n\n`;
 		} else {
-			console.log("[TaskNote] Inserting date heading with task template");
-			toInsert += `- [ ] Task`; // TODO: Able to load a template for this
+			console.log("[KanbanTaskNote] Inserting date heading with task template");
+			toInsert += `- [ ] Task\n\n`; // TODO: Able to load a template for this
 		}
 
 		let newContent: string;
 		if (notesHeadingMatch) {
 			// Insert before the # Notes heading
-			console.log("[TaskNote] Inserting before Note heading");
+			console.log("[KanbanTaskNote] Inserting before Note heading");
 			const index = notesHeadingMatch.index;
 			newContent = content.slice(0, index) + toInsert + content.slice(index);
 		} else {
 			// If # Notes heading doesn't exist, append at the end
-			console.log("[TaskNote] Inserting at the end");
+			console.log("[KanbanTaskNote] Inserting at the end");
 			newContent = content + toInsert;
 		}
 
 		await this.app.vault.modify(file, newContent);
-		new Notice(`Inserted date heading: ${today}`);
+		new Notice(`[INFO] [KanbanTaskNote] Inserted date heading: ${today}`);
 	}
 }
 
-class TaskModal extends Modal {
+class KanbanTaskNote extends Modal {
 	inputs: Record<string, HTMLInputElement | HTMLTextAreaElement> = {};
 	constructor(app: App) {
 		super(app);
@@ -187,18 +199,17 @@ class TaskModal extends Modal {
 		}
 
 		if (!values.name || !values.start) {
-			new Notice("[TaskNote] Please fill in all required fields.");
+			new Notice("[ERROR] [KanbanTaskNote] Please fill in all required fields.");
 			return;
 		}
 		else
 		{
-			console.log(`[TaskNote] Task: ${values.name}`);
-			new Notice(`[TaskNote] Task Created: ${values.name}`);
+			new Notice(`[INFO] [KanbanTaskNote] Task Created: ${values.name}`);
 		}
 
 		const yamlFrontmatter =
 			'---\n' +
-			`_plugin_id: task-note\n` +
+			`_plugin_id: kanban-task-note\n` +
 			Object.entries(values)
 				.map(([key, value]) => {
 					if (key === 'name') return ''; // Exclude name from YAML
@@ -213,7 +224,7 @@ class TaskModal extends Modal {
 						const notesArray = value.split('\n').map(t => t.trim()).filter(Boolean);
 						if (notesArray.length === 0) return `linkedNotes: `;
 						if (notesArray.some(note => !note.startsWith('[[') || !note.endsWith(']]'))) {
-							new Notice("[TaskNote] Related Notes should be in [[link]] format.");
+							new Notice("[KanbanTaskNote] Related Notes should be in [[link]] format.");
 							return `linkedNotes: `;
 						}
 						return `linkedNotes:\n${notesArray.map(note => `  - "${note}"`).join('\n')}`;
@@ -232,12 +243,12 @@ class TaskModal extends Modal {
 		await this.app.vault.create(fileName, 
 									yamlFrontmatter + 
 									linebreak +
-									'```task-note-ui\n```\n\n' +
+									'```kanban-task-note-ui\n```\n\n' +
 									startDateHeading + 
 									subtaskPlaceholder +
 									`# Notes\n\n`);
 									
-		new Notice(`[TaskNote] Task note created: ${fileName}`);
+		new Notice(`[INFO] [KanbanTaskNote] Task note created: ${fileName}`);
 		this.close();
 	}
 

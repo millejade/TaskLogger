@@ -1,9 +1,9 @@
 {
-	"id": "task-logger-plugin",
-	"name": "Task Logger",
+	"id": "kanban-task-note-plugin",
+	"name": "Kanban Task Note",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Plug in for logging timespent on each task in Obsidian.",
+	"description": "Plug in for creating Task Note compatible with Kanban.",
 	"author": "Mille Jade Cabrera",
 	"authorUrl": "https://github.com/millejade",
 	"fundingUrl": "https://github.com/millejade",
